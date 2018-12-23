@@ -10,6 +10,8 @@ else:
 	for i in sys.stdin.read():
 		tape.extend(list("0" * (8 - len(bin(ord(i))[2:])) + bin(ord(i))[2:]))
 
+tape = tape or ['0' for i in range(8)]
+
 ins = open(sys.argv[1], 'r').readlines()                                                                               
 curval = [] 
 curstate = []
