@@ -2,56 +2,42 @@ import sys
 
 tape = []
 pointer = 0
-state = '0'
+state = 0
 
-if sys.stdin.isatty():
-	tape = ['0' for i in range(8)]
-else:
+if not sys.stdin.isatty():
 	for i in sys.stdin.read():
-		tape.extend(list("0" * (8 - len(bin(ord(i))[2:])) + bin(ord(i))[2:]))
+		tape += list(map(int, "0" * (8 - len(bin(ord(i))[2:])) + bin(ord(i))[2:]))
+tape = tape or [0 for i in range(8)]
+length = len(tape)
 
-tape = tape or ['0' for i in range(8)]
-
-ins = open(sys.argv[1], 'r').readlines()                                                                               
-curval = [] 
-curstate = []
-replace = []
-move = []
-gostate = []
-pri = []
-halt = []
-
-for i in ins:
-	j = i.split()
-	curval.append(j[0])
-	curstate.append(j[1])
-	replace.append(j[2])
-	move.append(j[3])
-	gostate.append(j[4])
-	pri.append(j[5])
-	halt.append(j[6])
+lookup = {}
+with open(sys.argv[1], "r") as file:
+	s = file.readline()
+	while s:
+		i = list(map(int, s.split()))
+		if len(i) != 7:
+			raise Exception("Expected 7 fields, found %s" % len(i))
+		if i[0] != 0 and i[0] != 1:
+			raise Exception("Invalid tape current value %s, expected 0 or 1" % i[0])
+		if i[2] != 0 and i[2] != 1:
+			raise Exception("Invalid tape next value %s, expected 0 or 1" % i[2])
+		if i[3] != 0 and i[3] != 1:
+			raise Exception("Invalid movement direction %s, expected 0 (left) or 1 (right)" % i[3])
+		lookup[(i[0], i[1])] = tuple(i[2:])
+		s = file.readline()
 
 while True:
-	for i in ins:
-		if tape[pointer] == i.split()[0] and state == i.split()[1]:
-			# print(i.replace("\n", ""))
-			tape[pointer] = i.split()[2]
-			if pointer == 0 and i.split()[3] == '0':
-				pointer = len(tape) - 1
-			elif pointer == len(tape) - 1 and i.split()[3] == '1':
-				pointer = 0
-			elif i.split()[3] == '1':
-				pointer += 1
-			elif i.split()[3] == '0':
-				pointer -= 1
-				
-			state = i.split()[4]
-			if i.split()[5] == '1':
-				for j in range(0, len(tape), 8):
-					if "".join(tape[j:(j+8)]) != "0" * 8:
-						sys.stdout.write(chr(int("".join(tape[j:(j+8)]), 2)))
-			if i.split()[6] == '1':
-				sys.exit(1)
-			# print(tape)
-			# print(pointer)
-				
+	if not (tape[pointer], state) in lookup:
+		raise Exception("Value and state not in ruleset")
+	tape[pointer], move, state, do_print, do_halt = lookup[(tape[pointer], state)]
+	pointer = (pointer + (1 if move else -1) + length) % length
+	if do_print:
+		for j in range(0, len(tape), 8):
+			if any(tape[j:j+8]):
+				c = 0
+				for i in range(j, j + 8):
+					c <<= 1
+					c += tape[i]
+				sys.stdout.write(chr(c))
+	if do_halt:
+		break
