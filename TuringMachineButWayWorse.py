@@ -1,14 +1,12 @@
 import sys
 
+neg_tape = []
 tape = []
 pointer = 0
 state = 0
 
 if not sys.stdin.isatty():
-	for i in sys.stdin.read():
-		tape += list(map(int, "0" * (8 - len(bin(ord(i))[2:])) + bin(ord(i))[2:]))
-tape = tape or [0 for i in range(8)]
-length = len(tape)
+	tape = list(map(ord, sys.stdin.read()))
 
 lookup = {}
 with open(sys.argv[1], "r") as file:
@@ -27,17 +25,31 @@ with open(sys.argv[1], "r") as file:
 		s = file.readline()
 
 while True:
-	if not (tape[pointer], state) in lookup:
-		raise Exception("Value and state (%s, %s) not in ruleset.\nCurrent tape:\n%s" % (tape[pointer], state, tape))
-	tape[pointer], move, state, do_print, do_halt = lookup[(tape[pointer], state)]
-	pointer = (pointer + (1 if move else -1) + length) % length
+	index = pointer // 8
+	# when pointer = 0 and value is 1, current character is 1XXX XXXX. current character >> 7 = 1. 0 % 8 = 0. 7 - 0 = 7
+	# when pointer = 7 and value is 1, current character is XXXX XXX1. current character >> 0 = 1. 7 % 8 = 7. 7 - 7 = 0
+	# so that's why we use 7 - (pointer % 8)
+	if index >= 0:
+		if index >= len(tape):
+			tape += [0]
+	elif -index > len(neg_tape):
+		neg_tape += [0]
+	value = (tape[index] if index >= 0 else neg_tape[-index - 1]) >> (7 - pointer % 8) & 1
+	if not (value, state) in lookup:
+		debug_tape = "".join(map(lambda c: bin(256 | c)[3:], neg_tape[::-1])) + "".join(map(lambda c: bin(256 | c)[3:], tape))
+		debug_pointer = pointer + len(neg_tape) * 8
+		raise Exception("Value and state (%s, %s) not in ruleset.\nCurrent index: %s\nCurrent tape:\n%s[%s]%s" % (
+			value, state, pointer, debug_tape[:debug_pointer], debug_tape[debug_pointer], debug_tape[debug_pointer + 1:]
+		))
+	next_value, move, state, do_print, do_halt = lookup[(value, state)]
+	if next_value != value:
+		if index >= 0:
+			tape[index] = tape[index] | 1 << (7 - pointer % 8) & next_value << (7 - pointer % 8)
+		else:
+			neg_tape[index] = neg_tape[index] | 1 << (7 - pointer % 8) & next_value << (7 - pointer % 8)
+	pointer += 1 if move else -1
 	if do_print:
-		for j in range(0, len(tape), 8):
-			if any(tape[j:j+8]):
-				c = 0
-				for i in range(j, j + 8):
-					c <<= 1
-					c += tape[i]
-				sys.stdout.write(chr(c))
+		sys.stdout.write("".join(map(chr, neg_tape[::-1])))
+		sys.stdout.write("".join(map(chr, tape)))
 	if do_halt:
 		break
