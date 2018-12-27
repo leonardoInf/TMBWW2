@@ -28,7 +28,7 @@ with open(sys.argv[1], "r") as file:
 
 while True:
 	if not (tape[pointer], state) in lookup:
-		raise Exception("Value and state (%s, %s) not in ruleset" % (tape[pointer], state))
+		raise Exception("Value and state (%s, %s) not in ruleset.\nCurrent tape:\n%s" % (tape[pointer], state, tape))
 	tape[pointer], move, state, do_print, do_halt = lookup[(tape[pointer], state)]
 	pointer = (pointer + (1 if move else -1) + length) % length
 	if do_print:
