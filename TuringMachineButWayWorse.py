@@ -49,7 +49,9 @@ while True:
 			neg_tape[index] = (neg_tape[index] & 0xFF ^ (1 << (7 - pointer % 8))) | next_value << (7 - pointer % 8)
 	pointer += 1 if move else -1
 	if do_print:
-		sys.stdout.write("".join(map(chr, neg_tape[::-1])))
-		sys.stdout.write("".join(map(chr, tape)))
+		if index >= 0:
+			sys.stdout.write(chr(tape[index]))
+		else:
+			sys.stdout.write(chr(neg_tape[-index - 1]))
 	if do_halt:
 		break
