@@ -44,9 +44,9 @@ while True:
 	next_value, move, state, do_print, do_halt = lookup[(value, state)]
 	if next_value != value:
 		if index >= 0:
-			tape[index] = tape[index] | 1 << (7 - pointer % 8) & next_value << (7 - pointer % 8)
+			tape[index] = (tape[index] & 0xFF ^ (1 << (7 - pointer % 8))) | next_value << (7 - pointer % 8)
 		else:
-			neg_tape[index] = neg_tape[index] | 1 << (7 - pointer % 8) & next_value << (7 - pointer % 8)
+			neg_tape[index] = (neg_tape[index] & 0xFF ^ (1 << (7 - pointer % 8))) | next_value << (7 - pointer % 8)
 	pointer += 1 if move else -1
 	if do_print:
 		sys.stdout.write("".join(map(chr, neg_tape[::-1])))
