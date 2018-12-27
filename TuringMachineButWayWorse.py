@@ -3,7 +3,7 @@ import sys
 neg_tape = []
 tape = []
 pointer = 0
-state = 0
+state = '0'
 
 if not sys.stdin.isatty():
 	tape = list(map(ord, sys.stdin.read()))
@@ -12,7 +12,8 @@ lookup = {}
 with open(sys.argv[1], "r") as file:
 	s = file.readline()
 	while s:
-		i = list(map(int, s.split()))
+		i = list(s.split())
+		i[0], i[2], i[3], i[5], i[6] =  int(i[0]), int(i[2]), int(i[3]), int(i[5]), int(i[6])
 		if len(i) != 7:
 			raise Exception("Expected 7 fields, found %s" % len(i))
 		if i[0] != 0 and i[0] != 1:
@@ -21,7 +22,7 @@ with open(sys.argv[1], "r") as file:
 			raise Exception("Invalid tape next value %s, expected 0 or 1" % i[2])
 		if i[3] != 0 and i[3] != 1:
 			raise Exception("Invalid movement direction %s, expected 0 (left) or 1 (right)" % i[3])
-		lookup[(i[0], i[1])] = tuple(i[2:])
+		lookup[(i[0], str(i[1]))] = tuple(i[2:])
 		s = file.readline()
 
 while True:
