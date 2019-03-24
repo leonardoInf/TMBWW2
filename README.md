@@ -26,13 +26,13 @@ Would be `if the number the robot is seeing is 0 and the robot is in state 0, re
 
 Let's say that the tape is
 
-    <... infinite zeros ...> 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 <... infinite zeros ...>
+    <... infinite zeros ...> 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 <... infinite zeros ...>
                                      ^
 and you decide to print.
 
 First, the program would seperate the tape into seperate pieces of length 8:
 
-    <... infinite zeros ...>|0 1 0 1 0 1 0 1|0 1 0 1 0 1 0 1 0|1 0 1 0 1 0 1 0|<... infinite zeros ...>
+    <... infinite zeros ...>|0 1 0 1 0 1 0 1|0 1 0 1 0 1 0 1|0 1 0 1 0 1 0 1|<... infinite zeros ...>
                                      ^
 The eight bits that the robot is in is `0 1 0 1 0 1 0 1`
 
