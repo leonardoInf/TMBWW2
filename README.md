@@ -3,6 +3,8 @@ A programming language which is based off of Turing Machines but supports I/O
 
 **NOTE: THIS ASSUMES THAT YOU DO KNOW WHAT A TURING MACHINE IS**
 
+A tutorial on Turing Machines can be found [here](https://www.youtube.com/watch?v=dNRDvLACg5Q)
+
 Syntax:
 
                  0/1                                     <any char>                                  0/1                     
