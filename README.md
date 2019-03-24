@@ -40,7 +40,21 @@ Converting that to base-10, we get `85`, and that in ASCII is `U`.
 
 Congratulations, you have printed the character `U`.
 
-NOTE: TURING MACHINE BUT WAY WORSE DOESN'T APPEND A TRAILING NEWLINE 
+**Note: Turing Machine But Way Worse doesn't append a trailing newline**
+
+## Input
+
+Let's say that the input is `hi`.
+
+Taking the ASCII values of these gives us `['01101000', '01101001']`.
+
+Concatenating the list gives us `0110100001101001`.
+
+Therefore, the tape is `<... infinite zeros ...>0 1 1 0 1 0 0 0 0 1 1 0 1 0 0 1<... infinite zeros ...>`.
+
+If there is no input, the tape is `<... infinite zeros ...>0 0 0 0 0 0 0 0<... infinite zeros ...>`.
 
 
---TO BE CONTINUED--
+## Challenge Programs
+
+Coming soon!
