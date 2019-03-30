@@ -40,7 +40,7 @@ Converting that to base-10, we get `85`, and that in ASCII is `U`.
 
 Congratulations, you have printed the character `U`.
 
-**Note: Turing Machine But Way Worse doesn't append a trailing newline**
+**Note: Turing Machine But Way Worse doesn't append a trailing newline to the output (printing A and then B would result in AB, not A\nB)**
 
 ## Input
 
