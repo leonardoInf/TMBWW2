@@ -26,6 +26,8 @@ with open(sys.argv[1], "r") as file:
 		s = file.readline()
 
 while True:
+	debug_tape = "".join(map(lambda c: bin(256 | c)[3:], neg_tape[::-1])) + "".join(map(lambda c: bin(256 | c)[3:], tape))
+	debug_pointer = pointer + len(neg_tape) * 8
 	index = pointer // 8
 	# when pointer = 0 and value is 1, current character is 1XXX XXXX. current character >> 7 = 1. 0 % 8 = 0. 7 - 0 = 7
 	# when pointer = 7 and value is 1, current character is XXXX XXX1. current character >> 0 = 1. 7 % 8 = 7. 7 - 7 = 0
@@ -35,7 +37,7 @@ while True:
 			tape += [0]
 	elif -index > len(neg_tape):
 		neg_tape += [0]
-	value = (tape[index] if index >= 0 else neg_tape[-index - 1]) >> (7 - pointer % 8) & 1
+	value = (tape[index] if index >= 0 else neg_tape[~index]) >> (7 - pointer % 8) & 1
 	if not (value, state) in lookup:
 		debug_tape = "".join(map(lambda c: bin(256 | c)[3:], neg_tape[::-1])) + "".join(map(lambda c: bin(256 | c)[3:], tape))
 		debug_pointer = pointer + len(neg_tape) * 8
@@ -47,12 +49,13 @@ while True:
 		if index >= 0:
 			tape[index] = (tape[index] & 0xFF ^ (1 << (7 - pointer % 8))) | next_value << (7 - pointer % 8)
 		else:
-			neg_tape[index] = (neg_tape[index] & 0xFF ^ (1 << (7 - pointer % 8))) | next_value << (7 - pointer % 8)
+			neg_tape[~index] = (neg_tape[~index] & 0xFF ^ (1 << (7 - pointer % 8))) | next_value << (7 - pointer % 8)
 	pointer += 1 if move else -1
 	if do_print:
 		if index >= 0:
 			sys.stdout.write(chr(tape[index]))
 		else:
-			sys.stdout.write(chr(neg_tape[-index - 1]))
+			sys.stdout.write(chr(neg_tape[~index]))
 	if do_halt:
 		break
+	# print(debug_tape,debug_pointer,sep='\n')
