@@ -57,4 +57,7 @@ If there is no input, the tape is `<... infinite zeros ...>0 0 0 0 0 0 0 0<... i
 
 ## Challenge Programs
 
-Coming soon!
+ - Print "H"
+ - Make a cat program
+ - Make an infinite loop
+ - Output infinite "a"s
