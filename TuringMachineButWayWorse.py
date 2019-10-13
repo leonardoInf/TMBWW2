@@ -30,10 +30,6 @@ class TuringMachineButWorse():
             exit("Error: no .tmw file has been provided")
         if not os.path.isfile(self.filename):    #check if file exists    
             exit("File '{}' does not exist".format(self.filename))
-            
-    def next(self):
-        self.includeIndex += 1
-        return self.includeIndex
 
     def getTape(self):
         tapeFilename = ""
@@ -53,10 +49,9 @@ class TuringMachineButWorse():
     def retrieveIncludes(self):
         for line in self.includedLines:
             self.currentLine = line
-            #self.checkForMacro(0)
+            self.checkForMacro(0)
             if self.currentLine:
                 self.setLine(self.currentLine)
-            self.next()
                     
     def parseTMW(self):
         #try:
@@ -71,14 +66,24 @@ class TuringMachineButWorse():
                         self.currentLine = file.readline()       # read next line           
         #except: 
             #exit("Error while parsing")
+            
+    def getLine(self, file):
+        if file == 0:
+            if self.includeIndex < len(self.includedLines):
+                self.currentLine = self.includedLines[self.includeIndex]
+                self.includeIndex += 1
+        else:
+            self.currentLine = file.readline()
+        self.lineCounter += 1
+        print("Got: {}".format(self.currentLine))
         
     def setLine(self, line):
-        if line[:7] == "include":
+        if line[:7] == "include" or line[:3] == "def" or line[:3] == "end":
             return
-        if line[0:2] == "/*":                       # allow block comments
+        if line[:2] == "/*":                       # allow block comments
             self.blockComment = True
             return
-        if line[0:2] == "*/":
+        if line[:2] == "*/":
             self.blockComment = False
             return
         if line.strip() == "" or line[0] == "#" or line[0:2] == "//" or self.blockComment: #ignore blank lines and comments
@@ -138,27 +143,15 @@ class TuringMachineButWorse():
                 exit("Syntax error: Illegal macro definition at line {}".format(self.lineCounter))
             name = i[1]
             macro = []
-            if file != 0:
-                self.currentLine = file.readline()
-                self.lineCounter += 1
-            else:
-                self.currentLine = self.includedLines[self.next()]
+            self.getLine(file)
                 
             while self.currentLine[0:3] != "end":
                 macro.append(self.currentLine)
-                if file != 0:
-                    self.currentLine = file.readline()
-                    self.lineCounter += 1
-                else:
-                    self.currentLine = self.includedLines[self.next()]
+                self.getLine(file)
                 
             self.macros[name] = macro
             if self.currentLine:
-                if file != 0:
-                    self.currentLine = file.readline()
-                    self.lineCounter += 1
-                else:
-                    self.currentLine = self.includedLines[self.next()]
+                self.getLine(file)
         
         if self.currentLine[0:3] == "use":
             i = self.currentLine.split()
@@ -172,29 +165,26 @@ class TuringMachineButWorse():
             for line in macro:
                 self.setLine(line)
             if self.currentLine:
-                if file != 0:
-                    self.currentLine = file.readline()
-                    self.lineCounter += 1
-                else:
-                    self.currentLine = self.includedLines[self.next()]         
+                self.getLine(file)       
                     
     def preProcess(self):
         with open(self.filename, "r") as file:
             self.currentLine = file.readline()
             while self.currentLine:
-                i = self.currentLine.split()
-                if i[0] == "include":
-                    if len(i) != 2:
-                        exit("Syntax error: Illegal include directive at line {}".format(self.lineCounter))
-                    if not os.path.isfile(i[1]):
-                        exit("Include error: File '{}' could not be found".format(i[1]))
-                    with open(i[1], "r") as file2:
-                        self.currentLine = file2.readline()
-                        while self.currentLine:
-                            self.includedLines.append(self.currentLine)
+                if self.currentLine != " ":
+                    i = self.currentLine.split()
+                    if i[0] == "include":
+                        if len(i) != 2:
+                            exit("Syntax error: Illegal include directive at line {}".format(self.lineCounter))
+                        if not os.path.isfile(i[1]):
+                            exit("Include error: File '{}' could not be found".format(i[1]))
+                        with open(i[1], "r") as file2:
                             self.currentLine = file2.readline()
-                self.currentLine = file.readline()
-                self.lineCounter += 1
+                            while self.currentLine:
+                                self.includedLines.append(self.currentLine)
+                                self.currentLine = file2.readline()
+                    self.currentLine = file.readline()
+                    self.lineCounter += 1
                 
         self.currentLine = ""
         self.lineCounter = 0
