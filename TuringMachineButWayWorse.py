@@ -1,6 +1,8 @@
 import sys
 import os
 
+#TODO: support include everywhere, not only at the top
+
 class TuringMachineButWorse():
     def __init__(self, *args, **kwargs):
         self.neg_tape = []
@@ -75,7 +77,7 @@ class TuringMachineButWorse():
         else:
             self.currentLine = file.readline()
         self.lineCounter += 1
-        print("Got: {}".format(self.currentLine))
+        #print("Got: {}".format(self.currentLine))
         
     def setLine(self, line):
         if line[:7] == "include" or line[:3] == "def" or line[:3] == "end":

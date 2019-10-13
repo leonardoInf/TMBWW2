@@ -1,8 +1,8 @@
 /*
 This program outputs "Bad" if the input is "Good" and vice-versa
 */
-include macro.tmw
-use b           use macro b
+include macro1.tmw
+use b
 0 8 0 1 9 0 0
 1 9 1 1 9 0 0
 0 9 0 1 a 0 0
