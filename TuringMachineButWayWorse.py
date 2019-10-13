@@ -5,6 +5,8 @@ class TuringMachineButWorse():
     def __init__(self, *args, **kwargs):
         self.neg_tape = []
         self.tape = []
+        self.includedLines = []
+        self.includeIndex = 0
         self.macros = {}
         self.pointer = 0
         self.state = '0'
@@ -17,6 +19,7 @@ class TuringMachineButWorse():
     def launch(self):
         self.getTMW()
         self.getTape()
+        self.preProcess()
         self.parseTMW()
         self.run()
 
@@ -27,6 +30,10 @@ class TuringMachineButWorse():
             exit("Error: no .tmw file has been provided")
         if not os.path.isfile(self.filename):    #check if file exists    
             exit("File '{}' does not exist".format(self.filename))
+            
+    def next(self):
+        self.includeIndex += 1
+        return self.includeIndex
 
     def getTape(self):
         tapeFilename = ""
@@ -42,9 +49,18 @@ class TuringMachineButWorse():
             except:
                 if tapeFilename != "":
                     exit("Tape file '{}' does not exist or is corrupt".format(tapeFilename))
+
+    def retrieveIncludes(self):
+        for line in self.includedLines:
+            self.currentLine = line
+            #self.checkForMacro(0)
+            if self.currentLine:
+                self.setLine(self.currentLine)
+            self.next()
                     
     def parseTMW(self):
-        try:
+        #try:
+            self.retrieveIncludes()
             with open(self.filename, "r") as file:
                 self.currentLine = file.readline()
                 while self.currentLine:
@@ -52,12 +68,13 @@ class TuringMachineButWorse():
                     self.checkForMacro(file)
                     if self.currentLine:
                         self.setLine(self.currentLine)
-                        self.currentLine = file.readline()       # read next line
-                    
-        except: 
-            exit("Error while parsing file '{}'".format(self.filename))
+                        self.currentLine = file.readline()       # read next line           
+        #except: 
+            #exit("Error while parsing")
         
     def setLine(self, line):
+        if line[:7] == "include":
+            return
         if line[0:2] == "/*":                       # allow block comments
             self.blockComment = True
             return
@@ -66,8 +83,9 @@ class TuringMachineButWorse():
             return
         if line.strip() == "" or line[0] == "#" or line[0:2] == "//" or self.blockComment: #ignore blank lines and comments
             return
-        i = [int(x) if (j!=1 and j!=4 and j<7) else x for j,x in enumerate(line.split())]
+        i = [int(x) if (j!=1 and j!=4) else x for j,x in enumerate(line.split()[:7])]
         if len(i) != 7:
+            print(i)
             raise Exception("Expected 7 fields, found %s" % len(i))
         if i[0] != 0 and i[0] != 1:
             raise Exception("Invalid tape current value %s, expected 0 or 1" % i[0])
@@ -120,20 +138,31 @@ class TuringMachineButWorse():
                 exit("Syntax error: Illegal macro definition at line {}".format(self.lineCounter))
             name = i[1]
             macro = []
-            self.currentLine = file.readline()
-            while self.currentLine[0:3] != "end":
-                macro.append(self.currentLine)
+            if file != 0:
                 self.currentLine = file.readline()
                 self.lineCounter += 1
+            else:
+                self.currentLine = self.includedLines[self.next()]
+                
+            while self.currentLine[0:3] != "end":
+                macro.append(self.currentLine)
+                if file != 0:
+                    self.currentLine = file.readline()
+                    self.lineCounter += 1
+                else:
+                    self.currentLine = self.includedLines[self.next()]
                 
             self.macros[name] = macro
             if self.currentLine:
-                self.currentLine = file.readline()
-                self.lineCounter += 1
+                if file != 0:
+                    self.currentLine = file.readline()
+                    self.lineCounter += 1
+                else:
+                    self.currentLine = self.includedLines[self.next()]
         
         if self.currentLine[0:3] == "use":
             i = self.currentLine.split()
-            if(len(i) !=  2):
+            if len(i) !=  2:
                 exit("Syntax error: Illegal macro definition at line {}".format(self.lineCounter))
             name = i[1]
             try:
@@ -143,10 +172,32 @@ class TuringMachineButWorse():
             for line in macro:
                 self.setLine(line)
             if self.currentLine:
+                if file != 0:
+                    self.currentLine = file.readline()
+                    self.lineCounter += 1
+                else:
+                    self.currentLine = self.includedLines[self.next()]         
+                    
+    def preProcess(self):
+        with open(self.filename, "r") as file:
+            self.currentLine = file.readline()
+            while self.currentLine:
+                i = self.currentLine.split()
+                if i[0] == "include":
+                    if len(i) != 2:
+                        exit("Syntax error: Illegal include directive at line {}".format(self.lineCounter))
+                    if not os.path.isfile(i[1]):
+                        exit("Include error: File '{}' could not be found".format(i[1]))
+                    with open(i[1], "r") as file2:
+                        self.currentLine = file2.readline()
+                        while self.currentLine:
+                            self.includedLines.append(self.currentLine)
+                            self.currentLine = file2.readline()
                 self.currentLine = file.readline()
-                self.lineCounter += 1                
-        
-            
+                self.lineCounter += 1
+                
+        self.currentLine = ""
+        self.lineCounter = 0
     
 if __name__ == "__main__":
     tmw = TuringMachineButWorse()
