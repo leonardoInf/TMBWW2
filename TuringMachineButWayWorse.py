@@ -46,7 +46,7 @@ if os.path.isfile(filename):    #check if file exists
     except:
         exit("Could not read file '{}'".format(filename))
 else:
-        exit("File '{}' does not exist".format(filename))
+    exit("File '{}' does not exist".format(filename))
 
 while True:
     debug_tape = "".join(map(lambda c: bin(256 | c)[3:], neg_tape[::-1])) + "".join(map(lambda c: bin(256 | c)[3:], tape))
