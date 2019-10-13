@@ -5,7 +5,7 @@ class TuringMachineButWorse():
     def __init__(self, *args, **kwargs):
         self.neg_tape = []
         self.tape = []
-        self.macros = []
+        self.macros = {}
         self.pointer = 0
         self.state = '0'
         self.filename = ""    
@@ -49,19 +49,24 @@ class TuringMachineButWorse():
             while self.currentLine:
                 self.lineCounter += 1
                 self.checkForMacro(file)
-                i = [int(x) if (j!=1 and j!=4) else x for j,x in enumerate(self.currentLine.split())]
-                if len(i) != 7:
-                    raise Exception("Expected 7 fields, found %s" % len(i))
-                if i[0] != 0 and i[0] != 1:
-                    raise Exception("Invalid tape current value %s, expected 0 or 1" % i[0])
-                if i[2] != 0 and i[2] != 1:
-                    raise Exception("Invalid tape next value %s, expected 0 or 1" % i[2])
-                if i[3] != 0 and i[3] != 1:
-                    raise Exception("Invalid movement direction %s, expected 0 (left) or 1 (right)" % i[3])
-                self.lookup[(i[0], str(i[1]))] = tuple(i[2:])       #add dictionary entry
-                self.currentLine = file.readline()                  # read next line
+                if self.currentLine:
+                    self.setLine(self.currentLine)
+                    self.currentLine = file.readline()       # read next line
+                    
         #except: 
-        #   exit("Error while parsing file '{}'".format(self.filename))
+            #exit("Error while parsing file '{}'".format(self.filename))
+        
+    def setLine(self, line):
+        i = [int(x) if (j!=1 and j!=4) else x for j,x in enumerate(line.split())]
+        if len(i) != 7:
+            raise Exception("Expected 7 fields, found %s" % len(i))
+        if i[0] != 0 and i[0] != 1:
+            raise Exception("Invalid tape current value %s, expected 0 or 1" % i[0])
+        if i[2] != 0 and i[2] != 1:
+            raise Exception("Invalid tape next value %s, expected 0 or 1" % i[2])
+        if i[3] != 0 and i[3] != 1:
+            raise Exception("Invalid movement direction %s, expected 0 (left) or 1 (right)" % i[3])
+        self.lookup[(i[0], str(i[1]))] = tuple(i[2:])       #add dictionary entry
 
     def run(self):
         while True:
@@ -104,12 +109,30 @@ class TuringMachineButWorse():
             i = self.currentLine.split()
             if(len(i) !=  2):
                 exit("Syntax error: Illegal macro definition at line {}".format(self.lineCounter))
+            name = i[1]
             macro = []
-            while self.currentLine[0:3] != "end":
-                self.currentLine = file.readline()
-                macro.append(self.currentLine)
-            self.macros.append(macro)
             self.currentLine = file.readline()
+            while self.currentLine[0:3] != "end":
+                macro.append(self.currentLine)
+                self.currentLine = file.readline()
+                
+            self.macros[name] = macro
+            self.currentLine = file.readline()
+        
+        if self.currentLine[0:3] == "use":
+            i = self.currentLine.split()
+            if(len(i) !=  2):
+                exit("Syntax error: Illegal macro definition at line {}".format(self.lineCounter))
+            name = i[1]
+            try:
+                macro = self.macros[name]
+            except:
+                exit("Syntax error: Macro '{}' has not been defined".format(name))
+            for line in macro:
+                self.setLine(line)
+            self.currentLine = file.readline()        
+        
+            
     
 if __name__ == "__main__":
     tmw = TuringMachineButWorse()
