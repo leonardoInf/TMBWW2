@@ -43,8 +43,7 @@ class TuringMachineButWorse():
             with open(self.filename, "r") as file:
                 s = file.readline()
                 while s:
-                    i = list(s.split())
-                    i[0], i[2], i[3], i[5], i[6] =  int(i[0]), int(i[2]), int(i[3]), int(i[5]), int(i[6])
+                    i = [int(x) if (j!=1 and j!=4) else x for j,x in enumerate(s.split())]
                     if len(i) != 7:
                         raise Exception("Expected 7 fields, found %s" % len(i))
                     if i[0] != 0 and i[0] != 1:
