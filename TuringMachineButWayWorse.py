@@ -25,6 +25,7 @@ class TuringMachineButWorse():
             exit("File '{}' does not exist".format(self.filename))
 
     def getTape(self):
+        tapeFilename = ""
         if not sys.stdin.isatty():      # try to read self.tape from piped stdin
             self.tape = list(map(ord, sys.stdin.read()))
             if self.tape[0] == 65279:       # remove BOM if present
