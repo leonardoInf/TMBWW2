@@ -12,6 +12,7 @@ class TuringMachineButWorse():
         self.lookup = {}
         self.lineCounter = 0
         self.currentLine = ""
+        self.blockComment = False
         
     def launch(self):
         self.getTMW()
@@ -43,21 +44,29 @@ class TuringMachineButWorse():
                     exit("Tape file '{}' does not exist or is corrupt".format(tapeFilename))
                     
     def parseTMW(self):
-        #try:
-        with open(self.filename, "r") as file:
-            self.currentLine = file.readline()
-            while self.currentLine:
-                self.lineCounter += 1
-                self.checkForMacro(file)
-                if self.currentLine:
-                    self.setLine(self.currentLine)
-                    self.currentLine = file.readline()       # read next line
+        try:
+            with open(self.filename, "r") as file:
+                self.currentLine = file.readline()
+                while self.currentLine:
+                    self.lineCounter += 1
+                    self.checkForMacro(file)
+                    if self.currentLine:
+                        self.setLine(self.currentLine)
+                        self.currentLine = file.readline()       # read next line
                     
-        #except: 
-            #exit("Error while parsing file '{}'".format(self.filename))
+        except: 
+            exit("Error while parsing file '{}'".format(self.filename))
         
     def setLine(self, line):
-        i = [int(x) if (j!=1 and j!=4) else x for j,x in enumerate(line.split())]
+        if line[0:2] == "/*":                       # allow block comments
+            self.blockComment = True
+            return
+        if line[0:2] == "*/":
+            self.blockComment = False
+            return
+        if line.strip() == "" or line[0] == "#" or line[0:2] == "//" or self.blockComment: #ignore blank lines and comments
+            return
+        i = [int(x) if (j!=1 and j!=4 and j<7) else x for j,x in enumerate(line.split())]
         if len(i) != 7:
             raise Exception("Expected 7 fields, found %s" % len(i))
         if i[0] != 0 and i[0] != 1:
@@ -115,9 +124,12 @@ class TuringMachineButWorse():
             while self.currentLine[0:3] != "end":
                 macro.append(self.currentLine)
                 self.currentLine = file.readline()
+                self.lineCounter += 1
                 
             self.macros[name] = macro
-            self.currentLine = file.readline()
+            if self.currentLine:
+                self.currentLine = file.readline()
+                self.lineCounter += 1
         
         if self.currentLine[0:3] == "use":
             i = self.currentLine.split()
@@ -130,7 +142,9 @@ class TuringMachineButWorse():
                 exit("Syntax error: Macro '{}' has not been defined".format(name))
             for line in macro:
                 self.setLine(line)
-            self.currentLine = file.readline()        
+            if self.currentLine:
+                self.currentLine = file.readline()
+                self.lineCounter += 1                
         
             
     
