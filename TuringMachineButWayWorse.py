@@ -5,10 +5,13 @@ class TuringMachineButWorse():
     def __init__(self, *args, **kwargs):
         self.neg_tape = []
         self.tape = []
+        self.macros = []
         self.pointer = 0
         self.state = '0'
         self.filename = ""    
         self.lookup = {}
+        self.lineCounter = 0
+        self.currentLine = ""
         
     def launch(self):
         self.getTMW()
@@ -40,23 +43,25 @@ class TuringMachineButWorse():
                     exit("Tape file '{}' does not exist or is corrupt".format(tapeFilename))
                     
     def parseTMW(self):
-        try:   
-            with open(self.filename, "r") as file:
-                s = file.readline()
-                while s:
-                    i = [int(x) if (j!=1 and j!=4) else x for j,x in enumerate(s.split())]
-                    if len(i) != 7:
-                        raise Exception("Expected 7 fields, found %s" % len(i))
-                    if i[0] != 0 and i[0] != 1:
-                        raise Exception("Invalid tape current value %s, expected 0 or 1" % i[0])
-                    if i[2] != 0 and i[2] != 1:
-                        raise Exception("Invalid tape next value %s, expected 0 or 1" % i[2])
-                    if i[3] != 0 and i[3] != 1:
-                        raise Exception("Invalid movement direction %s, expected 0 (left) or 1 (right)" % i[3])
-                    self.lookup[(i[0], str(i[1]))] = tuple(i[2:])
-                    s = file.readline()
-        except:
-            exit("Could not read file '{}'".format(self.filename))
+        #try:
+        with open(self.filename, "r") as file:
+            self.currentLine = file.readline()
+            while self.currentLine:
+                self.lineCounter += 1
+                self.checkForMacro(file)
+                i = [int(x) if (j!=1 and j!=4) else x for j,x in enumerate(self.currentLine.split())]
+                if len(i) != 7:
+                    raise Exception("Expected 7 fields, found %s" % len(i))
+                if i[0] != 0 and i[0] != 1:
+                    raise Exception("Invalid tape current value %s, expected 0 or 1" % i[0])
+                if i[2] != 0 and i[2] != 1:
+                    raise Exception("Invalid tape next value %s, expected 0 or 1" % i[2])
+                if i[3] != 0 and i[3] != 1:
+                    raise Exception("Invalid movement direction %s, expected 0 (left) or 1 (right)" % i[3])
+                self.lookup[(i[0], str(i[1]))] = tuple(i[2:])       #add dictionary entry
+                self.currentLine = file.readline()                  # read next line
+        #except: 
+        #   exit("Error while parsing file '{}'".format(self.filename))
 
     def run(self):
         while True:
@@ -93,6 +98,18 @@ class TuringMachineButWorse():
             if do_halt:
                 break
             # print(debug_tape,debug_pointer,sep='\n')
+            
+    def checkForMacro(self, file):
+        if self.currentLine[0:3] == "def": 
+            i = self.currentLine.split()
+            if(len(i) !=  2):
+                exit("Syntax error: Illegal macro definition at line {}".format(self.lineCounter))
+            macro = []
+            while self.currentLine[0:3] != "end":
+                self.currentLine = file.readline()
+                macro.append(self.currentLine)
+            self.macros.append(macro)
+            self.currentLine = file.readline()
     
 if __name__ == "__main__":
     tmw = TuringMachineButWorse()
