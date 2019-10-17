@@ -1,4 +1,4 @@
-# Turing-Machine-But-Way-Worse2
+# TMBWW2
 A programming language which is based on Turing Machines but supports I/O.
 
 This is a fork of [this repo](https://github.com/MilkyWay90/Turing-Machine-But-Way-Worse) by [MilkyWay90](https://github.com/MilkyWay90) which seems to be dead.
@@ -15,13 +15,14 @@ A tutorial on Turing Machines can be found [here](https://www.youtube.com/watch?
 
 ## Usage
 The TMBWW2 interpreter is a Python script which can be invoked as follows:
+
 ``python TMBWW2.py <.tmw file>, (<.tape file>)``
 
 ## Syntax
 Each TMBWW instruction has the following form:
 
-        Number to be read (0/1) Current State (0-9|a-z) Write (0/1)
-        Move (0 = left, 1 = right) Print (0 = no, 1 = yes) Exit = (0/1)
+        Number to be read (0/1), Current State (0-9|a-z), Write (0/1),
+        Move (0 = left, 1 = right), Print (0 = no, 1 = yes), Exit = (0/1)
     
 For example,
 
