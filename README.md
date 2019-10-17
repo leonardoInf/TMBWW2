@@ -1,6 +1,7 @@
 # Turing-Machine-But-Way-Worse2
-A programming language which is based on Turing Machines but supports I/O
-This is a fork of [this repo]() by []() which seems to be dead.
+A programming language which is based on Turing Machines but supports I/O.
+
+This is a fork of [this repo](https://github.com/MilkyWay90/Turing-Machine-But-Way-Worse) by [MilkyWay90](https://github.com/MilkyWay90) which seems to be dead.
 
 New features of TMBWW2 include:
     - Macros
