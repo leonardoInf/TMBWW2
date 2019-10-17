@@ -80,6 +80,7 @@ class TuringMachineButWorse():
         #print("Got: {}".format(self.currentLine))
         
     def setLine(self, line):
+        print("Adding the following line: {}".format(line))
         if line[:7] == "include" or line[:3] == "def" or line[:3] == "end":
             return
         if line[:2] == "/*":                       # allow block comments
@@ -92,7 +93,7 @@ class TuringMachineButWorse():
             return
         i = [int(x) if (j!=1 and j!=4) else x for j,x in enumerate(line.split()[:7])]
         if len(i) != 7:
-            print(i)
+            #print(i)
             raise Exception("Expected 7 fields, found %s" % len(i))
         if i[0] != 0 and i[0] != 1:
             raise Exception("Invalid tape current value %s, expected 0 or 1" % i[0])
@@ -141,33 +142,83 @@ class TuringMachineButWorse():
     def checkForMacro(self, file):
         if self.currentLine[0:3] == "def": 
             i = self.currentLine.split()
-            if(len(i) !=  2):
+            if(len(i) < 2 or len(i) > 5):
                 exit("Syntax error: Illegal macro definition at line {}".format(self.lineCounter))
-            name = i[1]
             macro = []
-            self.getLine(file)
-                
+            name = i[1]
+            begin = -1
+            end = -1
+            formal_marg  = ""
+            if len(i) >= 4:
+                begin = i[2]
+                end = i[3]
+                if len(i) == 5:
+                    formal_marg = i[4]
+            elif len(i) == 3:
+                formal_marg = i[2]
+            
+            self.getLine(file)          #current line is in self.currentLine
+            
+            
             while self.currentLine[0:3] != "end":
                 macro.append(self.currentLine)
                 self.getLine(file)
                 
-            self.macros[name] = macro
-            if self.currentLine:
+            self.macros[name] = (macro, (begin, end, formal_marg))
+            #print("Macro {} has been added: {}".format(name, self.macros[name]))
+            
+            if self.currentLine:        #move on to next line if there are any
                 self.getLine(file)
+                if self.currentLine[0:3] == "def" or self.currentLine[0:3] == "use":
+                    self.checkForMacro(file)
         
         if self.currentLine[0:3] == "use":
             i = self.currentLine.split()
-            if len(i) !=  2:
+            if len(i) <  2 or len(i) > 5:
                 exit("Syntax error: Illegal macro definition at line {}".format(self.lineCounter))
             name = i[1]
+            marg = ""
+            margs = ()
+            if len(i) == 3:
+                marg = i[2]
+                margs = (-1,-1,-1)
+            if len(i) == 4:
+                margs = (i[2], i[3], 1)
+            elif len(i) == 5:
+                margs = (i[2], i[3], i[4])
+                marg = margs[2]
             try:
-                macro = self.macros[name]
+                m = self.macros[name]
+                macro_len = len(m[0])
             except:
                 exit("Syntax error: Macro '{}' has not been defined".format(name))
-            for line in macro:
+            for i,l in enumerate(m[0]):
+                line = ""
+                #print(margs[2])
+                if m[1][2] != "" and not marg:
+                    #print("formal: {}, tatsächlich: {}".format(m[1], marg))
+                    exit("Syntax error: Argument for Macro {} has not been provided".format(name))
+                if marg != margs[2]:
+                    if marg[0] == "|":
+                        marg = marg[1:]
+                        line = self.insertSingleMacroArg(l, m[1][2], marg, i==0)
+                    else:
+                        line = self.insertSingleIndex(l, m[1][2], marg, i==0)
+                        
+                elif len(margs) == 2:
+                    line = self.insertMacroArgWithoutVal(l, m[1], margs, macro_len, i==0)
+                        
+                elif len(margs) == 3:
+                    line = self.insertMacroArg(l, m[1], margs, macro_len, i==0)
+                        
+                else:       #keine margs
+                    line = l
                 self.setLine(line)
+            
             if self.currentLine:
-                self.getLine(file)       
+                self.getLine(file)
+                if self.currentLine[0:3] == "def" or self.currentLine[0:3] == "use":
+                    self.checkForMacro(file)
                     
     def preProcess(self):
         with open(self.filename, "r") as file:
@@ -190,6 +241,102 @@ class TuringMachineButWorse():
                 
         self.currentLine = ""
         self.lineCounter = 0
+     
+    macroIndexCounter = 0 
+    def insertMacroArg(self, in_, formal_list, mArg_list, macro_len, new_macro=False):
+        splitLine = in_.split()
+        
+        if new_macro:                       
+            self.macroIndexCounter = 0
+        for i in range(2):                         #set marg indices = formal_list[0:2]
+             occurences = [j for j,x in enumerate(splitLine) if x == formal_list[i]]
+             for j in occurences:
+                index_val = self.convert_to_index(mArg_list[0])
+                if i == 0:                          #the first index gets incremented while the second does not
+                    index_val += self.macroIndexCounter
+                if i == 1:
+                    if self.macroIndexCounter == macro_len-1:
+                        index_val = self.convert_to_index(mArg_list[1])
+                    else:
+                        index_val += self.macroIndexCounter + 1
+                #print(index_val)
+                splitLine[j] = self.convert_to_char(index_val) 
+        
+        binaryMArg = bin(ord(mArg_list[2]))[2:]      #set marg value = formal_list[2]
+        while len(binaryMArg) < 8:      #add preceding zeroes to make one byte
+            binaryMArg = "0" + binaryMArg
+        occurences = [j for j,x in enumerate(splitLine) if x == formal_list[2]] #list comprehension
+        for j in occurences:
+            splitLine[j] = binaryMArg[self.macroIndexCounter]
+            
+        
+        self.macroIndexCounter += 1
+        return " ".join(splitLine)
+       
+    
+    withoutValCounter = 0
+    def insertMacroArgWithoutVal(self, in_, formal_list, indices_list, macro_len, new_macro=False):
+        splitLine = in_.split()
+        
+        if new_macro:                       
+            self.withoutValCounter = 0
+        for i in range(2):                         #set marg indices = formal_list[0:2]
+            occurences = [j for j,x in enumerate(splitLine) if x == formal_list[i]]
+            for j in occurences:
+                index_val = self.convert_to_index(indices_list[0])
+                if i == 0:                          #the first index gets incremented while the second does not
+                    index_val += self.withoutValCounter
+                if i == 1:
+                    if self.macroIndexCounter == macro_len-1:
+                        index_val = self.convert_to_index(indices_list[1])
+                    else:
+                        index_val += self.withoutValCounter + 1
+                #print(index_val)
+                splitLine[j] = self.convert_to_char(index_val)
+            self.withoutValCounter += 1
+        return " ".join(splitLine)
+    
+    singleMacroIndexCounter = 0
+    def insertSingleMacroArg(self, in_, formal, mArg, new_macro=False):
+        if new_macro:
+            self.singleMacroIndexCounter = 0
+    
+        splitLine = in_.split() 
+        binaryMArg = bin(ord(mArg))[2:]      #set marg value = formal_list[2]
+        while len(binaryMArg) < 8:      #add preceding zeroes to make one byte
+            binaryMArg = "0" + binaryMArg
+        occurences = [j for j,x in enumerate(splitLine) if x == formal] #list comprehension
+        for j in occurences:
+            splitLine[j] = binaryMArg[self.singleMacroIndexCounter]
+            
+        self.singleMacroIndexCounter += 1
+        return " ".join(splitLine)
+        
+    singleIndexCounter = 0
+    def insertSingleIndex(self, in_, formal, index, new_macro=False):
+        splitLine = in_.split()
+        if new_macro:                       
+            self.singleIndexCounter = 0
+        occurences = [j for j,x in enumerate(splitLine) if x == formal]
+        for j in occurences:
+            splitLine[j] = self.convert_to_char(self.convert_to_index(index) + self.singleIndexCounter)
+        self.singleIndexCounter += 1
+        return " ".join(splitLine)
+        
+        
+    def convert_to_index(self, char):
+        val = 0
+        if char.isdigit():
+            val = int(char)
+        else:                               
+            val = ord(char)-87    # convert letters to indices, a = 10
+        return val
+    
+    def convert_to_char(self, num):
+        if num <= 9:
+            return str(num)
+        return chr(num+87)
+        
     
 if __name__ == "__main__":
     tmw = TuringMachineButWorse()

@@ -5,11 +5,13 @@ This is a fork of [this repo](https://github.com/MilkyWay90/Turing-Machine-But-W
 
 The new features of TMBWW2 are:
 
-    - Macros
+    - Macros with arguments (!)
     
     - Include (at the top)
 
     - Provide separate .tape file
+    
+    - Comments
     
     - Object oriented code
 
