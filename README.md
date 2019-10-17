@@ -3,10 +3,14 @@ A programming language which is based on Turing Machines but supports I/O.
 
 This is a fork of [this repo](https://github.com/MilkyWay90/Turing-Machine-But-Way-Worse) by [MilkyWay90](https://github.com/MilkyWay90) which seems to be dead.
 
-New features of TMBWW2 include:
+The new features of TMBWW2 are:
+
     - Macros
+    
     - Include (at the top)
+
     - Provide separate .tape file
+    
     - Object oriented code
 
 **NOTE: THIS ASSUMES THAT YOU DO KNOW WHAT A TURING MACHINE IS**
