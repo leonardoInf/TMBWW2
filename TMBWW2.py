@@ -1,7 +1,7 @@
 import sys
 import os
 
-#TODO: support include everywhere, not only at the top
+#TODO: allow multiple choice for one single state in macros
 
 class TuringMachineButWorse():
     def __init__(self, *args, **kwargs):
@@ -13,10 +13,15 @@ class TuringMachineButWorse():
         self.pointer = 0
         self.state = '0'
         self.filename = ""    
+        self.filename2 = ""    
         self.lookup = {}
         self.lineCounter = 0
         self.currentLine = ""
         self.blockComment = False
+    
+    def __del__(self): 
+        os.remove(self.filename2)    #remove temp file 
+
         
     def launch(self):
         self.getTMW()
@@ -49,16 +54,19 @@ class TuringMachineButWorse():
                     exit("Tape file '{}' does not exist or is corrupt".format(tapeFilename))
 
     def retrieveIncludes(self):
-        for line in self.includedLines:
-            self.currentLine = line
-            self.checkForMacro(0)
-            if self.currentLine:
-                self.setLine(self.currentLine)
-                    
+        self.filename2 = "temp" + self.filename
+        with open(self.filename2, "w") as fobj:
+            for line in self.includedLines:
+                fobj.write(line)
+            with open(self.filename, "r") as fobj2:
+                fobj2.readline()        # skip the line which features the include
+                fobj.write("\n")        # add newline
+                fobj.write(fobj2.read())
+                
     def parseTMW(self):
         #try:
             self.retrieveIncludes()
-            with open(self.filename, "r") as file:
+            with open(self.filename2, "r") as file:
                 self.currentLine = file.readline()
                 while self.currentLine:
                     self.lineCounter += 1
@@ -226,18 +234,19 @@ class TuringMachineButWorse():
             while self.currentLine:
                 if self.currentLine != " ":
                     i = self.currentLine.split()
-                    if i[0] == "include":
-                        if len(i) != 2:
-                            exit("Syntax error: Illegal include directive at line {}".format(self.lineCounter))
-                        if not os.path.isfile(i[1]):
-                            exit("Include error: File '{}' could not be found".format(i[1]))
-                        with open(i[1], "r") as file2:
-                            self.currentLine = file2.readline()
-                            while self.currentLine:
-                                self.includedLines.append(self.currentLine)
+                    if i:
+                        if i[0] == "include":
+                            if len(i) != 2:
+                                exit("Syntax error: Illegal include directive at line {}".format(self.lineCounter))
+                            if not os.path.isfile(i[1]):
+                                exit("Include error: File '{}' could not be found".format(i[1]))
+                            with open(i[1], "r") as file2:
                                 self.currentLine = file2.readline()
-                    self.currentLine = file.readline()
-                    self.lineCounter += 1
+                                while self.currentLine:
+                                    self.includedLines.append(self.currentLine)
+                                    self.currentLine = file2.readline()
+                        self.currentLine = file.readline()
+                        self.lineCounter += 1
                 
         self.currentLine = ""
         self.lineCounter = 0
