@@ -26,7 +26,7 @@ The TMBWW2 interpreter is a Python script which can be invoked as follows:
 Each TMBWW instruction has the following form:
 
         Number to be read (0/1), Current State (0-9|a-z), Write (0/1),
-        Move (0 = left, 1 = right), Print (0 = no, 1 = yes), Exit = (0/1)
+        Move (0 = left, 1 = right), Goto state (0-9|a-z), Print (0 = no, 1 = yes), Exit = (0/1)
     
 For example,
 
